@@ -48,4 +48,5 @@ jobs:
         run: aws lambda update-function-code --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" --zip-file fileb://lambda.zip
 
       - name: Report deployment success
-        run: echo "Deployment successful: Lambda function ${{ vars.LAMBDA_FUNCTION_NAME }} was updated."
+        run: >-
+          echo "Deployment successful: Lambda function ${{ vars.LAMBDA_FUNCTION_NAME }} was updated."
