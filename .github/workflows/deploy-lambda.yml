@@ -38,30 +38,51 @@ jobs:
           cd lambda-package
           zip -qr ../lambda.zip .
 
-      - name: Debug OIDC token
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const token = await core.getIDToken();
-            const payload = JSON.parse(
-              Buffer.from(token.split('.')[1], 'base64url').toString()
-            );
-
-            console.log("OIDC subject:", payload.sub);
-            console.log("OIDC audience:", payload.aud);
-
       - name: Configure AWS credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Deploy to existing Lambda function
+      - name: Deploy code to Lambda
         run: |
           aws lambda update-function-code \
             --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
             --zip-file fileb://lambda.zip
 
-      - name: Report deployment success
+      - name: Wait for Lambda update
         run: |
-          echo "Deployment successful: Lambda function ${{ vars.LAMBDA_FUNCTION_NAME }} was updated."
+          aws lambda wait function-updated \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}"
+
+      - name: Publish new Lambda version
+        id: publish
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
+            --description "GitHub Actions deployment ${GITHUB_SHA}" \
+            --query 'Version' \
+            --output text)
+
+          echo "Published Lambda Version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Move production alias
+        run: |
+          VERSION="${{ steps.publish.outputs.version }}"
+
+          aws lambda update-alias \
+            --function-name "${{ vars.LAMBDA_FUNCTION_NAME }}" \
+            --name production \
+            --function-version "$VERSION"
+
+          echo "Production alias now points to Version $VERSION"
+
+      - name: Deployment summary
+        run: |
+          echo "======================================"
+          echo "Lambda deployment successful"
+          echo "Function: ${{ vars.LAMBDA_FUNCTION_NAME }}"
+          echo "Version: ${{ steps.publish.outputs.version }}"
+          echo "Alias: production"
+          echo "======================================"
