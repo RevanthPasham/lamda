@@ -1,0 +1,22 @@
+{
+  "name": "lambda-postman-demo",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/handler.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && powershell -NoProfile -Command \"if (Test-Path lambda-package) { Remove-Item lambda-package -Recurse -Force }; if (Test-Path lambda.zip) { Remove-Item lambda.zip -Force }; New-Item -ItemType Directory lambda-package | Out-Null; Copy-Item dist\\* lambda-package\\ -Recurse; Copy-Item package.json lambda-package\\; Copy-Item package-lock.json lambda-package\\; Copy-Item node_modules lambda-package\\ -Recurse; Compress-Archive -Path lambda-package\\* -DestinationPath lambda.zip -Force\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^26.5.1",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  }
+}
