@@ -17,6 +17,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "@aws-sdk/client-ssm": "^3.1138.0",
     "pg": "^8.23.0"
   }
 }
