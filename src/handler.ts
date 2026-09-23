@@ -30,6 +30,7 @@ export const handler = async (
   const method = event.requestContext?.http?.method;
   const path = event.rawPath;
 
+  
   if (method === "GET" && path === "/db") {
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
